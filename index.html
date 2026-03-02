@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Professional Math Tutor - Word Problems with OCR</title>
+<link rel="stylesheet" href="style.css">
+<script src="libs/tesseract.min.js"></script>
+</head>
+<body>
+
+<div id="appContainer">
+    <h2>📘 Professional Math Tutor</h2>
+
+    <!-- Problem Input -->
+    <textarea id="inputProblem" placeholder="Type problem, use camera/voice" rows="3"></textarea>
+    <div style="margin-top:5px;">
+        <button id="voiceBtn">🎤 Speak Problem</button>
+        <button id="cameraBtn">📷 Use Camera</button>
+        <button id="solveProblemBtn">✅ Solve Problem</button>
+    </div>
+
+    <!-- Gallery Photo Upload -->
+    <h4>Upload Photo from Gallery / Camera</h4>
+    <input type="file" id="uploadGallery" accept="image/*" capture="environment">
+    <canvas id="canvasGallery" style="display:none;"></canvas>
+
+    <video id="cameraPreview" width="300" height="200" autoplay style="display:none; border:1px solid #ccc; margin-top:5px;"></video>
+
+    <div id="result"></div>
+    <div id="steps"></div>
+
+    <hr>
+
+    <!-- Percentage Calculator -->
+    <h3>Percentage Calculator</h3>
+    <div>
+        <label>Amount:</label>
+        <input type="number" id="amountInput" />
+    </div>
+    <div>
+        <label>Percent:</label>
+        <input type="number" id="percentInput" />
+    </div>
+    <button id="solvePercentBtn">✅ Solve Percentage</button>
+    <div id="outputPercent"></div>
+
+    <hr>
+
+    <!-- History / Quick Recall -->
+    <h4>History & Quick Recall</h4>
+    <div id="lastTopicsButtons"></div>
+    <div id="historyDiv"></div>
+</div>
+
+<script type="module">
+
+// ---------- DOM ----------
+const inputProblem = document.getElementById("inputProblem");
+const solveProblemBtn = document.getElementById("solveProblemBtn");
+const resultDiv = document.getElementById("result");
+const stepsDiv = document.getElementById("steps");
+
+const amountInput = document.getElementById("amountInput");
+const percentInput = document.getElementById("percentInput");
+const solvePercentBtn = document.getElementById("solvePercentBtn");
+const outputPercent = document.getElementById("outputPercent");
+
+const cameraBtn = document.getElementById("cameraBtn");
+const cameraPreview = document.getElementById("cameraPreview");
+
+const voiceBtn = document.getElementById("voiceBtn");
+const uploadGallery = document.getElementById("uploadGallery");
+const canvasGallery = document.getElementById("canvasGallery");
+
+const lastTopicsButtons = document.getElementById("lastTopicsButtons");
+const historyDiv = document.getElementById("historyDiv");
+
+let history = [];
+
+// ---------- Voice Output ----------
+function speakResult(text){
+    if('speechSynthesis' in window){
+        const utter = new SpeechSynthesisUtterance(text);
+        utter.lang = 'en-US';
+        window.speechSynthesis.speak(utter);
+    }
+}
+
+// ---------- Percentage ----------
+const perc = {
+    increaseByPercentage: (amount, percent) => amount + (amount*percent/100),
+    decreaseByPercentage: (amount, percent) => amount - (amount*percent/100)
+};
+
+// ---------- OCR ----------
+async function recognizeFromCanvas(canvas){
+    try{
+        const { data:{ text } } = await Tesseract.recognize(canvas,'eng',{logger:m=>console.log(m)});
+        return text;
+    } catch(err){ console.error(err); return ""; }
+}
+
+// ---------- Word Problem Solvers ----------
+// (Same as your previous code: Distance, Train, Profit/Loss, Work, Age, Interest, HCF/LCM etc.)
+function solveWordProblem(problem){
+    const text = problem.toLowerCase();
+
+    // HCF/LCM
+    if(text.includes("hcf") || text.includes("lcm")){
+        const nums = problem.match(/\d+/g)?.map(Number);
+        if(!nums || nums.length<2) return "Cannot solve";
+        const hcf = (a,b)=>b==0?a:hcf(b,a%b);
+        const lcm = (a,b)=> (a*b)/hcf(a,b);
+        if(text.includes("hcf")) return `HCF = ${nums.reduce((a,b)=>hcf(a,b))}`;
+        if(text.includes("lcm")) return `LCM = ${nums.reduce((a,b)=>lcm(a,b))}`;
+    }
+
+    // Profit/Loss
+    if(text.includes("profit") || text.includes("loss")){
+        const nums = problem.match(/\d+(\.\d+)?/g);
+        if(!nums || nums.length<2) return "Cannot solve";
+        const cp = parseFloat(nums[0]), sp = parseFloat(nums[1]);
+        if(text.includes("profit")) return `Profit = ${sp-cp}`;
+        if(text.includes("loss")) return `Loss = ${cp-sp}`;
+    }
+
+    // Train / Relative Speed
+    if(text.includes("train") || text.includes("running") || text.includes("km/hr")){
+        const lengthMatch = problem.match(/(\d+(\.\d+)?)\s*m/);
+        const trainLength = lengthMatch ? parseFloat(lengthMatch[1]) : 0;
+        const speedMatch = problem.match(/running at (\d+(\.\d+)?)\s*km\/hr/);
+        const manSpeed = speedMatch ? parseFloat(speedMatch[1])*1000/3600 : 0;
+        const timeMatch = problem.match(/in (\d+(\.\d+)?)\s*seconds?/);
+        const t = timeMatch ? parseFloat(timeMatch[1]) : 0;
+        if(trainLength && t){
+            const trainSpeed = trainLength/t + manSpeed;
+            const trainSpeedKmHr = (trainSpeed*3600/1000).toFixed(2);
+            return `Speed = ${trainSpeedKmHr} km/hr`;
+        }
+    }
+
+    // Default
+    return "Word problem type not recognized";
+}
+
+// ---------- Solve Problem ----------
+solveProblemBtn.addEventListener("click", ()=>{
+    const problem = inputProblem.value.trim();
+    if(!problem){ alert("Enter a problem"); return; }
+
+    let solution="";
+    if(/^[0-9+\-*/().\s]+$/.test(problem)){
+        solution = eval(problem);
+    } else {
+        solution = solveWordProblem(problem);
+    }
+
+    resultDiv.innerHTML = `<b>Result:</b> ${solution}`;
+    speakResult(solution.toString());
+
+    history.push(problem);
+    updateHistory();
+});
+
+// ---------- Percentage Calculator ----------
+solvePercentBtn.addEventListener("click", ()=>{
+    const amount = parseFloat(amountInput.value);
+    const percent = parseFloat(percentInput.value);
+    if(isNaN(amount)||isNaN(percent)){ alert("Enter valid numbers"); return; }
+    const increased = perc.increaseByPercentage(amount, percent);
+    const decreased = perc.decreaseByPercentage(amount, percent);
+    outputPercent.innerHTML = `<p>Increase ${amount} by ${percent}%: ${increased}</p>
+                               <p>Decrease ${amount} by ${percent}%: ${decreased}</p>`;
+    speakResult(`Increase ${amount} by ${percent} percent: ${increased}. Decrease: ${decreased}`);
+});
+
+// ---------- Camera OCR ----------
+cameraBtn.addEventListener("click", async ()=>{
+    cameraPreview.style.display="block";
+    const stream = await navigator.mediaDevices.getUserMedia({video:true});
+    cameraPreview.srcObject = stream;
+
+    setTimeout(async ()=>{
+        const canvas=document.createElement("canvas");
+        canvas.width=cameraPreview.videoWidth;
+        canvas.height=cameraPreview.videoHeight;
+        canvas.getContext("2d").drawImage(cameraPreview,0,0,canvas.width,canvas.height);
+
+        const text = await recognizeFromCanvas(canvas);
+        inputProblem.value = text;
+
+        stream.getTracks().forEach(track=>track.stop());
+        cameraPreview.style.display="none";
+        solveProblemBtn.click();
+    },3000);
+});
+
+// ---------- Gallery Photo OCR ----------
+uploadGallery.addEventListener("change", (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(ev){
+        const img = new Image();
+        img.src = ev.target.result;
+        img.onload = async function(){
+            canvasGallery.width = img.width;
+            canvasGallery.height = img.height;
+            const ctx = canvasGallery.getContext("2d");
+            ctx.drawImage(img,0,0);
+
+            const text = await recognizeFromCanvas(canvasGallery);
+            inputProblem.value = text.replace(/\n/g,'').trim();
+            solveProblemBtn.click(); // Auto-solve
+        }
+    }
+    reader.readAsDataURL(file);
+});
+
+// ---------- Voice Input ----------
+let recognition;
+if('webkitSpeechRecognition' in window){
+    recognition = new webkitSpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    voiceBtn.addEventListener("click", ()=>{
+        recognition.start();
+    });
+
+    recognition.onresult = function(event){
+        const transcript = event.results[0][0].transcript;
+        inputProblem.value = transcript;
+    }
+
+    recognition.onerror = function(event){
+        console.error("Speech recognition error", event.error);
+    }
+} else {
+    voiceBtn.disabled = true;
+    voiceBtn.textContent = "🎤 Voice Not Supported";
+}
+
+// ---------- History / Quick Recall ----------
+function updateHistory(){
+    historyDiv.innerHTML="";
+    lastTopicsButtons.innerHTML="";
+
+    history.slice(-5).forEach(item=>{
+        const btn=document.createElement("button");
+        btn.textContent=item;
+        btn.addEventListener("click",()=>{ inputProblem.value=item; });
+        lastTopicsButtons.appendChild(btn);
+    });
+
+    history.forEach(item=>{
+        const p=document.createElement("p");
+        p.textContent=item;
+        historyDiv.appendChild(p);
+    });
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+ /* style.css */
+
+/* ---------- General ---------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f7fcff;
+    margin: 0;
+    padding: 0;
+}
+
+#appContainer {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #192714dd;
+    background-color: #ffffffdd;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    position: relative;
+    background-image: url('assets/images/math_symbols.png');
+    background-repeat: repeat;
+    background-size: cover;
+    background-position: right bottom;
+}
+
+/* ---------- Headings ---------- */
+h2 {
+    text-align: center;
+    color: #f6f7fc;
+}
+
+h3, h4 {
+    color: #ebecf0;
+}
+
+/* ---------- Textarea ---------- */
+textarea, input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-top: 5px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+/* ---------- Buttons ---------- */
+button {
+    background-color: #2859a3;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 15px;
+    margin: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+button:hover {
+    background-color: #5c6bc0;
+}
+
+#solvePercentBtn {
+    background-color: #1b5e20;
+}
+
+#solvePercentBtn:hover {
+    background-color: #556d57;
+}
+
+/* ---------- Result / Steps / Output ---------- */
+#result, #steps, #outputPercent {
+    margin-top: 10px;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    font-size: 16px;
+    color: #16161a;
+}
+
+/* ---------- History ---------- */
+#historyDiv, #lastTopicsButtons {
+    margin-top: 10px;
+}
+
+#lastTopicsButtons button {
+    font-size: 12px;
+    padding: 5px 8px;
+    background-color: #f8ffff;
+}
+
+#lastTopicsButtons button:hover {
+    background-color: #f006aa;
+}
+
+#appContainer {
+    background-image: url('assets/images/math_symbols.png');
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    background-size: contain; /* automatically resize */
+}
+
+#appContainer {
+    background-color: #0e0c0c; /* light blue-grey color */
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgb(7, 7, 7);
+    color: #e0e1ec; /* default text color */
+}
+/* ---------- Camera Preview ---------- */
+#cameraPreview {
+    border-radius: 10px;
+    margin-top: 5px;
+}
+
+/* ---------- Responsive ---------- */
+@media screen and (max-width: 600px){
+    #appContainer {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    button {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+
+    #result, #steps, #outputPercent {
+        font-size: 14px;
+    }
+}
